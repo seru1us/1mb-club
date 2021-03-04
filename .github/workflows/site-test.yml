@@ -23,14 +23,17 @@ jobs:
   test-sites-for-size:
     # So the long story short here, is that ${{ matrix.paths }} is the target of the app, and its
     # value will be used for the docker image name when it is built and uploaded.
-    needs: generate-directory-matrix
+    needs: generate-site-matrix
     strategy:
       matrix:
-        site: ${{ fromJson(needs.generate-directory-matrix.outputs.matrix) }}
+        site: ${{ fromJson(needs.generate-site-matrix.outputs.matrix) }}
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         
       - name: Copy shared directory into build path
-        run: wget -p -o tmp/${{ matrix.site }}.log http://0bin.net/
+        run: |
+          TARGET_SITE=${${{ matrix.site }}%".md"}
+          wget -p -o tmp/${TARGET_SITE}.log http://0bin.net/
+          
