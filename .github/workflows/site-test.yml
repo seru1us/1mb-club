@@ -1,0 +1,36 @@
+
+name: Test all the web sites foe size and uptime
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-site-matrix:
+  runs-on: ubuntu-20.04
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build list of sites
+        id: set-matrix
+        run: |
+          cd _site_listings
+          sites=(*)
+          JSON_SITES=$(printf '%s\n' "${sites[@]}" | jq -R . | jq -s -c .)
+          echo "::set-output name=matrix::${JSON_DIRS}"
+          echo $JSON_SITES
+
+  test-sites-for-size:
+    # So the long story short here, is that ${{ matrix.paths }} is the target of the app, and its
+    # value will be used for the docker image name when it is built and uploaded.
+    needs: generate-directory-matrix
+    strategy:
+      matrix:
+        site: ${{ fromJson(needs.generate-directory-matrix.outputs.matrix) }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        
+      - name: Copy shared directory into build path
+        run: wget -p -o tmp/${{ matrix.site }}.log http://0bin.net/
